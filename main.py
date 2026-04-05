@@ -1,5 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Security
-from fastapi.security.api_key import APIKeyHeader
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import os
@@ -12,23 +11,12 @@ app = FastAPI(title="Expense Tracker")
 
 CATEGORIES_PATH = os.path.join(os.path.dirname(__file__), "categories.json")
 
-# Define API Key security scheme
-API_KEY_NAME = "X-API-Key"
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
-
-def get_current_user(api_key: str = Security(api_key_header)) -> str:
-    """
-    Validate the API key and return a user identifier.
-    For simplicity, we use the API key itself as the user_id.
-    In a production system, this would lookup the user in the database.
-    """
-    if not api_key:
-        raise HTTPException(status_code=403, detail="Could not validate credentials")
-    # For now, treat API key as user identifier
-    return api_key
+# Note: Authentication is handled at the network level by FastMCP Cloud (Bearer Token).
+# The user_id is passed natively as a standard MCP tool argument by Claude.
 
 @app.post("/expenses")
-def add_expense(expense: ExpenseCreate, user_id: str = Depends(get_current_user)):
+def add_expense(expense: ExpenseCreate, user_id: str):
+    """Add a new expense for a specific user_id"""
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -40,7 +28,8 @@ def add_expense(expense: ExpenseCreate, user_id: str = Depends(get_current_user)
         return {"status": "ok", "id": row_id}
 
 @app.put("/expenses/{expense_id}")
-def edit_expense(expense_id: int, expense: ExpenseEdit, user_id: str = Depends(get_current_user)):
+def edit_expense(expense_id: int, expense: ExpenseEdit, user_id: str):
+    """Edit an existing expense for a specific user_id"""
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute("SELECT * FROM expenses WHERE id = %s AND user_id = %s", (expense_id, user_id))
@@ -74,7 +63,8 @@ def edit_expense(expense_id: int, expense: ExpenseEdit, user_id: str = Depends(g
         return {"status": "ok", "message": f"Expense {expense_id} updated"}
 
 @app.delete("/expenses/{expense_id}")
-def delete_expense(expense_id: int, user_id: str = Depends(get_current_user)):
+def delete_expense(expense_id: int, user_id: str):
+    """Delete an expense for a specific user_id"""
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute("DELETE FROM expenses WHERE id = %s AND user_id = %s", (expense_id, user_id))
@@ -85,7 +75,8 @@ def delete_expense(expense_id: int, user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail=f"Expense {expense_id} not found or you don't have permission")
 
 @app.get("/expenses")
-def list_expenses(start_date: str, end_date: str, user_id: str = Depends(get_current_user)):
+def list_expenses(start_date: str, end_date: str, user_id: str):
+    """List expenses within a date range for a specific user_id"""
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -100,7 +91,8 @@ def list_expenses(start_date: str, end_date: str, user_id: str = Depends(get_cur
             return [dict(r) for r in c.fetchall()]
 
 @app.post("/credits")
-def add_credit(credit: CreditCreate, user_id: str = Depends(get_current_user)):
+def add_credit(credit: CreditCreate, user_id: str):
+    """Add a credit source for a specific user_id"""
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -112,7 +104,8 @@ def add_credit(credit: CreditCreate, user_id: str = Depends(get_current_user)):
         return {"status": "ok", "id": row_id}
 
 @app.post("/budgets")
-def add_budget(budget: BudgetCreate, user_id: str = Depends(get_current_user)):
+def add_budget(budget: BudgetCreate, user_id: str):
+    """Add a budget for a category for a specific user_id"""
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -127,7 +120,8 @@ def add_budget(budget: BudgetCreate, user_id: str = Depends(get_current_user)):
         return {"status": "ok"}
 
 @app.get("/summary")
-def summarize(start_date: str, end_date: str, category: Optional[str] = None, user_id: str = Depends(get_current_user)):
+def summarize(start_date: str, end_date: str, user_id: str, category: Optional[str] = None):
+    """Summarize expenses by category for a specific user_id"""
     with get_db() as conn:
         with conn.cursor() as c:
             query = (
@@ -149,6 +143,7 @@ def summarize(start_date: str, end_date: str, category: Optional[str] = None, us
             return [dict(r) for r in c.fetchall()]
 
 @app.get("/categories")
-def get_categories(user_id: str = Depends(get_current_user)):
+def get_categories():
+    """Get the standard list of categories"""
     with open(CATEGORIES_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
