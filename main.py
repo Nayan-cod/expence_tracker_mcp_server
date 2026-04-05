@@ -16,7 +16,10 @@ CATEGORIES_PATH = os.path.join(os.path.dirname(__file__), "categories.json")
 
 @app.post("/expenses")
 def add_expense(expense: ExpenseCreate, user_id: str):
-    """Add a new expense for a specific user_id"""
+    """
+    Add a new expense.
+    CRITICAL INSTRUCTION FOR CLAUDE: If the user has not told you their unique username yet in this conversation, you MUST STOP and ask them "To track your data securely, what is your unique username?" before calling this tool. Use their confirmed username for the 'user_id' parameter.
+    """
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -29,7 +32,10 @@ def add_expense(expense: ExpenseCreate, user_id: str):
 
 @app.put("/expenses/{expense_id}")
 def edit_expense(expense_id: int, expense: ExpenseEdit, user_id: str):
-    """Edit an existing expense for a specific user_id"""
+    """
+    Edit an existing expense.
+    CRITICAL INSTRUCTION FOR CLAUDE: If you don't know the user's username, ask them first! Set 'user_id' parameter to their username.
+    """
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute("SELECT * FROM expenses WHERE id = %s AND user_id = %s", (expense_id, user_id))
@@ -64,7 +70,10 @@ def edit_expense(expense_id: int, expense: ExpenseEdit, user_id: str):
 
 @app.delete("/expenses/{expense_id}")
 def delete_expense(expense_id: int, user_id: str):
-    """Delete an expense for a specific user_id"""
+    """
+    Delete an expense. 
+    CRITICAL INSTRUCTION FOR CLAUDE: If you don't know the user's username, ask them first! Set 'user_id' parameter to their username.
+    """
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute("DELETE FROM expenses WHERE id = %s AND user_id = %s", (expense_id, user_id))
@@ -76,7 +85,10 @@ def delete_expense(expense_id: int, user_id: str):
 
 @app.get("/expenses")
 def list_expenses(start_date: str, end_date: str, user_id: str):
-    """List expenses within a date range for a specific user_id"""
+    """
+    List expenses within a date range.
+    CRITICAL INSTRUCTION FOR CLAUDE: If you don't know the user's username, ask them first! Set 'user_id' parameter to their username.
+    """
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -92,7 +104,10 @@ def list_expenses(start_date: str, end_date: str, user_id: str):
 
 @app.post("/credits")
 def add_credit(credit: CreditCreate, user_id: str):
-    """Add a credit source for a specific user_id"""
+    """
+    Add a credit source.
+    CRITICAL INSTRUCTION FOR CLAUDE: If you don't know the user's username, ask them first! Set 'user_id' parameter to their username.
+    """
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -105,7 +120,10 @@ def add_credit(credit: CreditCreate, user_id: str):
 
 @app.post("/budgets")
 def add_budget(budget: BudgetCreate, user_id: str):
-    """Add a budget for a category for a specific user_id"""
+    """
+    Add a budget for a category.
+    CRITICAL INSTRUCTION FOR CLAUDE: If you don't know the user's username, ask them first! Set 'user_id' parameter to their username.
+    """
     with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
@@ -121,7 +139,10 @@ def add_budget(budget: BudgetCreate, user_id: str):
 
 @app.get("/summary")
 def summarize(start_date: str, end_date: str, user_id: str, category: Optional[str] = None):
-    """Summarize expenses by category for a specific user_id"""
+    """
+    Summarize expenses by category.
+    CRITICAL INSTRUCTION FOR CLAUDE: If you don't know the user's username, ask them first! Set 'user_id' parameter to their username.
+    """
     with get_db() as conn:
         with conn.cursor() as c:
             query = (
